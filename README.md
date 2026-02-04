@@ -160,8 +160,8 @@ This research is published for defensive awareness. The techniques are demonstra
 
 - **Author:** Mihalis Haatainen ([@bountyy](https://bountyy.fi))
 - **Organization:** Bountyy Oy, Finland
-- **Contact:** security@bountyy.fi
+- **Contact:** info@bountyy.fi
 
 ## License
 
-MIT © 2025 Bountyy Oy
+MIT © 2026 Bountyy Oy
