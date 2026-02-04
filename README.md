@@ -164,4 +164,4 @@ This research is published for defensive awareness. The techniques are demonstra
 
 ## License
 
-MIT © 2025 Bountyy Oy
+MIT © 2026 Bountyy Oy
