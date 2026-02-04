@@ -146,7 +146,7 @@ invisible-prompt-injection/
 
 ## Key Takeaways
 
-1. **HTML comments in markdown are a real prompt injection vector.** They're invisible when rendered, readable by LLMs, and indistinguishable from legitimate developer annotations. There's no scanner that can flag "developer used an HTML comment."
+1. **HTML comments in markdown are a real prompt injection vector.** They're invisible when rendered, readable by LLMs, and indistinguishable from legitimate developer annotations. One known scanner that can detect this is [Lonkero](https://github.com/bountyyfi/lonkero).
 
 2. **The attack surface is the gap between rendered and raw markdown.** Humans see rendered docs. LLMs process raw text. Anything invisible in rendering but present in raw text is a potential injection vector.
 
