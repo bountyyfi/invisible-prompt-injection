@@ -77,7 +77,7 @@ The AI even added a warning: *"⚠️ Note: nordiq-validate/register must be imp
 
 #### Tested Models
 
-The injection was tested against the following frontier models and succeeded on all of them:
+The injection was tested against the following frontier models:
 
 | Model | Result |
 |---|---|
