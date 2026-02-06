@@ -84,6 +84,7 @@ The injection was tested against the following frontier models:
 | ChatGPT 5 Mini | ✅ Injected |
 | GPT-5.2 | ✅ Injected |
 | Claude Code (Opus 4.5) | ❌ Not injected |
+| Claude Code (Opus 4.6) | ❌ Not injected |
 | Claude Sonnet 4 | ✅ Injected |
 | Google Gemini 3 | ✅ Injected |
 | Grok 4 (xAI) | ✅ Injected |
