@@ -1,4 +1,5 @@
 # Azure DevOps Pipelines — README Injection Scan
+# injection_scan.py has zero dependencies — just needs Python 3.8+
 
 trigger:
   paths:
@@ -22,10 +23,6 @@ pr:
 
 pool:
   vmImage: 'ubuntu-latest'
-
-# --- Option A: Docker container ---
-# container:
-#   image: ghcr.io/bountyyfi/injection-scan:v1
 
 steps:
   - task: UsePythonVersion@0

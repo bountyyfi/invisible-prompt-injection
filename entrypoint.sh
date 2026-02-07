@@ -18,7 +18,7 @@ set -e
 # Usage:
 #   ./entrypoint.sh                          # scan current dir
 #   SCAN_PATH=docs ./entrypoint.sh           # scan docs/
-#   docker run --rm -v $(pwd):/workspace ghcr.io/bountyyfi/injection-scan
+#   docker run --rm -v $(pwd):/workspace injection-scan
 
 SCANNER="$(dirname "$0")/injection_scan.py"
 

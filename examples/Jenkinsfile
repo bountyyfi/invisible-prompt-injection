@@ -1,7 +1,7 @@
 // Jenkins Pipeline — README Injection Scan
 //
-// Option A: Docker agent (recommended)
-// Option B: Any agent with Python 3 installed
+// Requires Python 3.8+ on the agent.
+// injection_scan.py has zero pip dependencies — just copy it into the repo.
 
 pipeline {
     agent any
@@ -15,14 +15,6 @@ pipeline {
 
     stages {
         stage('Injection Scan') {
-            // --- Option A: Docker agent ---
-            // agent {
-            //     docker {
-            //         image 'ghcr.io/bountyyfi/injection-scan:v1'
-            //         args '-v ${WORKSPACE}:/workspace'
-            //     }
-            // }
-
             steps {
                 script {
                     def args = "${params.SCAN_PATH}"
@@ -37,10 +29,6 @@ pipeline {
                         args += " --exclude ${params.SCAN_EXCLUDE}"
                     }
 
-                    // Option A (Docker): already has the script
-                    // sh "python3 /opt/injection-scan/injection_scan.py ${args}"
-
-                    // Option B (standalone): script is in the repo
                     sh "python3 injection_scan.py ${args}"
                 }
             }

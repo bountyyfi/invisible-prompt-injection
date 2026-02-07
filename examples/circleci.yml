@@ -1,16 +1,13 @@
 # CircleCI — README Injection Scan
 #
 # Add to your .circleci/config.yml
+# injection_scan.py has zero dependencies — just needs Python 3.8+
 
 version: 2.1
 
 jobs:
   injection-scan:
     docker:
-      # Option A: dedicated image
-      # - image: ghcr.io/bountyyfi/injection-scan:v1
-
-      # Option B: plain Python
       - image: cimg/python:3.11
     steps:
       - checkout

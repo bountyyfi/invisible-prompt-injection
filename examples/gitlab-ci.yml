@@ -2,20 +2,19 @@
 #
 # Add this to your .gitlab-ci.yml or include it as a template.
 #
-# Option A: Docker image (no setup needed)
-# Option B: pip-less — just copy injection_scan.py into your repo
+# Option A: standalone script (recommended — zero dependencies)
+# Option B: self-built Docker image
 
-# --- Option A: Docker ---
 injection-scan:
   stage: test
-  image: ghcr.io/bountyyfi/injection-scan:v1
+  image: python:3.11-slim
   variables:
     SCAN_PATH: "."
     SCAN_RECURSIVE: "true"
     SCAN_FAIL_ON: "critical"
     # SCAN_EXCLUDE: "vendor,third_party"
   script:
-    - /opt/injection-scan/entrypoint.sh
+    - python3 injection_scan.py ${SCAN_PATH} -r --fail-on ${SCAN_FAIL_ON}
   rules:
     - changes:
         - "**/*.md"
@@ -25,12 +24,15 @@ injection-scan:
         - "**/*.html"
         - "**/*.htm"
 
-# --- Option B: standalone script (no Docker) ---
+# --- Option B: self-built Docker image ---
+# Build the Dockerfile from this repo, push to your own registry,
+# then reference it here:
+#
 # injection-scan:
 #   stage: test
-#   image: python:3.11-slim
+#   image: $CI_REGISTRY_IMAGE/injection-scan:latest
 #   script:
-#     - python3 injection_scan.py . -r --fail-on critical
+#     - /opt/injection-scan/entrypoint.sh
 #   rules:
 #     - changes:
 #         - "**/*.md"

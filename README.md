@@ -157,13 +157,9 @@ docker run --rm -v "$(pwd):/workspace" \
 ```yaml
 injection-scan:
   stage: test
-  image: ghcr.io/bountyyfi/injection-scan:v1
-  variables:
-    SCAN_PATH: "."
-    SCAN_RECURSIVE: "true"
-    SCAN_FAIL_ON: "critical"
+  image: python:3.11-slim
   script:
-    - /opt/injection-scan/entrypoint.sh
+    - python3 injection_scan.py . -r --fail-on critical
 ```
 
 ### Jenkins
