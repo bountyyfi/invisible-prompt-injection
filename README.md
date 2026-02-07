@@ -84,36 +84,112 @@ This is a preprocessing fix. One regex eliminates the primary attack vector. Ren
 invisible-prompt-injection/
 ├── README.md                          ← You are here
 ├── SMAC.md                            ← Safe Markdown for AI Consumption standard
+├── action.yml                         ← GitHub Action definition
+├── injection_scan.py                  ← Standalone scanner (zero dependencies)
+├── entrypoint.sh                      ← Universal CI wrapper
+├── Dockerfile                         ← Container image for any CI platform
 ├── tools/
-│   ├── drpt.py                        ← DRPT benchmark framework
-│   └── injection_scan.py              ← CI scanner for documentation files
-├── drpt-test-set/                     ← Generated test READMEs (after running drpt.py generate)
+│   └── drpt.py                        ← DRPT benchmark framework
+├── examples/
+│   ├── workflow.yml                   ← GitHub Actions
+│   ├── gitlab-ci.yml                  ← GitLab CI/CD
+│   ├── Jenkinsfile                    ← Jenkins Pipeline
+│   ├── circleci.yml                   ← CircleCI
+│   ├── azure-pipelines.yml            ← Azure DevOps
+│   └── bitbucket-pipelines.yml        ← Bitbucket Pipelines
 ├── poisoned/
 │   └── Readme.md                      ← Working PoC: HTML comments + MD ref links
 ├── .github/workflows/
-│   └── readme-injection-scan.yml      ← GitHub Action: scan PRs for injection patterns
+│   └── self-test.yml                  ← Repo CI self-test
 └── LICENSE
 ```
 
-## Using the CI scanner
+## Running the scanner
 
-The scanner detects injection patterns in documentation files and integrates with GitHub Actions:
+### Standalone (any machine with Python 3)
+
+The scanner is a single file with **zero dependencies** — just Python 3.8+:
 
 ```bash
 # Scan a file
-python tools/injection_scan.py README.md -v
+python3 injection_scan.py README.md -v
 
-# Scan recursively (e.g. node_modules)
-python tools/injection_scan.py ./node_modules -r -q
+# Scan a directory recursively
+python3 injection_scan.py . -r --fail-on critical
 
 # JSON output for pipelines
-python tools/injection_scan.py README.md --json
+python3 injection_scan.py . -r --json
 
-# Strip injections
-python tools/injection_scan.py README.md --strip > clean.md
+# Strip injections from a file
+python3 injection_scan.py README.md --strip > clean.md
 ```
 
-The GitHub Action (`.github/workflows/readme-injection-scan.yml`) runs on every PR that touches documentation files, annotates findings inline, and blocks merge on critical findings.
+### Docker (any CI platform)
+
+```bash
+docker build -t injection-scan .
+docker run --rm -v "$(pwd):/workspace" injection-scan
+```
+
+Configure via environment variables:
+
+```bash
+docker run --rm -v "$(pwd):/workspace" \
+  -e SCAN_PATH=docs \
+  -e SCAN_RECURSIVE=true \
+  -e SCAN_FAIL_ON=warning \
+  -e SCAN_EXCLUDE=vendor,third_party \
+  injection-scan
+```
+
+### GitHub Actions
+
+```yaml
+- uses: bountyyfi/invisible-prompt-injection@v1
+  with:
+    path: '.'
+    recursive: 'true'
+    fail-on: 'critical'
+```
+
+### GitLab CI
+
+```yaml
+injection-scan:
+  stage: test
+  image: ghcr.io/bountyyfi/injection-scan:v1
+  variables:
+    SCAN_PATH: "."
+    SCAN_RECURSIVE: "true"
+    SCAN_FAIL_ON: "critical"
+  script:
+    - /opt/injection-scan/entrypoint.sh
+```
+
+### Jenkins
+
+```groovy
+stage('Injection Scan') {
+    steps {
+        sh 'python3 injection_scan.py . -r --fail-on critical'
+    }
+}
+```
+
+### Any other CI
+
+The scanner is one Python file. Copy `injection_scan.py` into your repo or use the Docker image. It uses only the Python standard library — no `pip install` needed.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SCAN_PATH` | `.` | File or directory to scan |
+| `SCAN_RECURSIVE` | `true` | Scan directories recursively |
+| `SCAN_FAIL_ON` | `critical` | Exit 1 threshold: `any`, `warning`, `critical` |
+| `SCAN_EXCLUDE` | | Comma-separated paths to skip |
+| `SCAN_VERBOSE` | `false` | Show detailed findings |
+| `SCAN_FORMAT` | `text` | Output format: `text`, `json`, `github` |
+
+Full examples for every platform in [`examples/`](examples/).
 
 ## Who should care
 

@@ -1,0 +1,37 @@
+# Azure DevOps Pipelines — README Injection Scan
+
+trigger:
+  paths:
+    include:
+      - '**/*.md'
+      - '**/*.markdown'
+      - '**/*.rst'
+      - '**/*.txt'
+      - '**/*.html'
+      - '**/*.htm'
+
+pr:
+  paths:
+    include:
+      - '**/*.md'
+      - '**/*.markdown'
+      - '**/*.rst'
+      - '**/*.txt'
+      - '**/*.html'
+      - '**/*.htm'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+# --- Option A: Docker container ---
+# container:
+#   image: ghcr.io/bountyyfi/injection-scan:v1
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.11'
+
+  - script: |
+      python3 injection_scan.py . -r --fail-on critical
+    displayName: 'Run README Injection Scan'

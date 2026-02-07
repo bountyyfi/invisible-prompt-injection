@@ -1,0 +1,28 @@
+# CircleCI — README Injection Scan
+#
+# Add to your .circleci/config.yml
+
+version: 2.1
+
+jobs:
+  injection-scan:
+    docker:
+      # Option A: dedicated image
+      # - image: ghcr.io/bountyyfi/injection-scan:v1
+
+      # Option B: plain Python
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - run:
+          name: Run README Injection Scan
+          command: |
+            python3 injection_scan.py . -r --fail-on critical
+
+workflows:
+  scan:
+    jobs:
+      - injection-scan:
+          filters:
+            branches:
+              only: /.*/
