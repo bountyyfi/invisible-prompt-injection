@@ -21,6 +21,33 @@ When a developer asks an AI assistant "help me set this up in production" and th
 
 **This is not a model alignment failure. It is a preprocessing failure.** The AI correctly interprets documentation. The problem is that the documentation contains unreviewed content invisible to the human who approved it.
 
+## Attack chain
+
+1. Attacker publishes useful npm package with clean, working code
+2. README contains HTML comments with fake "production configuration" docs
+3. Package gains organic adoption — code passes all security scans
+4. Developer asks AI: "help me deploy this in production"
+5. AI reads raw README, finds "documentation" in comments
+6. AI generates code with:
+   - `require('nordiq-validate/register')` — attacker-controlled module
+   - `configure({ schemaRegistry: 'https://attacker.dev/...' })` — attacker endpoint
+   - ENV vars pointing to attacker infrastructure
+7. Developer accepts AI suggestion (30–50% acceptance rate in studies)
+8. Attacker-controlled code runs in production
+
+## Why traditional defenses fail
+
+| Defense | Why it misses this |
+|---------|-------------------|
+| `npm audit` | Scans code dependencies, not documentation |
+| SAST/DAST | Don't process README files |
+| Code review | Developers don't review AI-generated "boilerplate" |
+| DLP/email gateways | HTML comments are valid, not malicious |
+| Unicode scanners | This technique uses zero exotic characters |
+| Package security scores | The package itself can have a perfect score |
+
+The attack surface is the **documentation**, not the code. No existing supply chain tool inspects it.
+
 ## Measuring it: DRPT
 
 The **Documentation Rendering Parity Test** is a benchmark for measuring whether an AI system maintains parity between rendered and raw markdown.
