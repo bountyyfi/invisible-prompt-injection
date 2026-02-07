@@ -1,0 +1,113 @@
+name: 'README Injection Scan'
+description: 'Scan documentation files for invisible prompt injection patterns that could manipulate AI coding assistants. Part of the SMAC (Safe Markdown for AI Consumption) standard.'
+author: 'Bountyy Oy'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  path:
+    description: 'File or directory to scan'
+    required: false
+    default: '.'
+  recursive:
+    description: 'Scan directories recursively'
+    required: false
+    default: 'true'
+  fail-on:
+    description: 'Severity threshold for failing the check (any, warning, critical)'
+    required: false
+    default: 'critical'
+  exclude:
+    description: 'Comma-separated list of paths to exclude (relative to repo root)'
+    required: false
+    default: ''
+  verbose:
+    description: 'Show detailed findings'
+    required: false
+    default: 'false'
+
+outputs:
+  total-findings:
+    description: 'Total number of findings'
+    value: ${{ steps.scan.outputs.total-findings }}
+  critical-findings:
+    description: 'Number of critical findings'
+    value: ${{ steps.scan.outputs.critical-findings }}
+  clean:
+    description: 'Whether the scan passed (true/false)'
+    value: ${{ steps.scan.outputs.clean }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Run injection scanner
+      id: scan
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_RECURSIVE: ${{ inputs.recursive }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_EXCLUDE: ${{ inputs.exclude }}
+        INPUT_VERBOSE: ${{ inputs.verbose }}
+      run: |
+        SCANNER="${{ github.action_path }}/injection_scan.py"
+
+        ARGS="${INPUT_PATH}"
+
+        if [ "${INPUT_RECURSIVE}" = "true" ]; then
+          ARGS="${ARGS} -r"
+        fi
+
+        if [ "${INPUT_VERBOSE}" = "true" ]; then
+          ARGS="${ARGS} -v"
+        fi
+
+        ARGS="${ARGS} --fail-on ${INPUT_FAIL_ON}"
+
+        # Handle excludes
+        if [ -n "${INPUT_EXCLUDE}" ]; then
+          ARGS="${ARGS} --exclude ${INPUT_EXCLUDE}"
+        fi
+
+        # Run with GitHub annotations
+        ARGS="${ARGS} --github"
+
+        echo "## 🔍 README Injection Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        python3 "${SCANNER}" ${ARGS} 2>&1 | tee /tmp/scan_output.txt
+        SCAN_EXIT=${PIPESTATUS[0]}
+
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        cat /tmp/scan_output.txt >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        # Parse stats from output
+        TOTAL=$(grep -oP 'Total: \K[0-9]+' /tmp/scan_output.txt || echo "0")
+        CRITICAL=$(grep -oP '[0-9]+(?= critical)' /tmp/scan_output.txt | tail -1 || echo "0")
+
+        echo "total-findings=${TOTAL}" >> $GITHUB_OUTPUT
+        echo "critical-findings=${CRITICAL}" >> $GITHUB_OUTPUT
+
+        if [ $SCAN_EXIT -eq 0 ]; then
+          echo "clean=true" >> $GITHUB_OUTPUT
+          echo "✅ No critical injection patterns found." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "clean=false" >> $GITHUB_OUTPUT
+          echo "❌ **Critical injection patterns detected.**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Hidden content in documentation files can manipulate AI coding assistants" >> $GITHUB_STEP_SUMMARY
+          echo "into generating code with attacker-controlled imports, endpoints, and configuration." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See the [SMAC standard](https://github.com/bountyyfi/invisible-prompt-injection/blob/main/SMAC.md) for remediation." >> $GITHUB_STEP_SUMMARY
+        fi
+
+        exit $SCAN_EXIT
