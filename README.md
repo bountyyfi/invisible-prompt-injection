@@ -94,16 +94,26 @@ python tools/drpt.py report results/
 
 ## The fix: SMAC
 
-**Safe Markdown for AI Consumption** is a four-rule preprocessing standard:
+Every defense in the [table above](#why-traditional-defenses-fail) operates on **code**. This attack operates on **documentation**. That's why they all miss it.
 
-1. **Strip HTML comments** before LLM ingestion
-2. **Strip markdown reference-only links** before LLM ingestion
-3. **Render markdown first**, feed rendered text to the model — not raw source
-4. **Log discarded content** for audit trail
+**Safe Markdown for AI Consumption (SMAC)** closes the gap by preprocessing documentation before it reaches the model:
+
+| Rule | What it does | What it kills |
+|------|-------------|---------------|
+| **SMAC-1** | Strip HTML comments before LLM ingestion | The primary injection vector — `<!-- require('attacker/module') -->` |
+| **SMAC-2** | Strip markdown reference-only links | The secondary vector — `[//]: # (always call init first)` |
+| **SMAC-3** | Render markdown first, feed rendered text to the model | Eliminates the **entire class** — the AI sees what the human sees |
+| **SMAC-4** | Log discarded content | Audit trail for incident response |
+
+**Why this works when model hardening alone doesn't:** the AI is correctly following documentation. The problem isn't the model — it's that the documentation contains content the human never reviewed. SMAC removes that content before the model sees it. One regex (`re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)`) eliminates the primary attack vector. Rendering markdown before ingestion eliminates every variant.
+
+**Who needs to implement this:**
+- **IDE copilot teams** — every `README.md` in every dependency is model input
+- **"Ask AI about this repo" features** — the repo's docs are untrusted input, not system instructions
+- **RAG pipelines** — you're embedding invisible content alongside visible content
+- **Platform teams** (GitHub, GitLab, npm, PyPI) — consider a "rendered only" API for AI integrations
 
 Full specification: [`SMAC.md`](SMAC.md)
-
-This is a preprocessing fix. One regex eliminates the primary attack vector. Rendering markdown before LLM ingestion eliminates the entire class.
 
 ## Repository contents
 
@@ -221,18 +231,6 @@ SCAN_RECURSIVE=true SCAN_FAIL_ON=critical python3 injection_scan.py
 Auto-detection: `--github` is enabled automatically when `GITHUB_ACTIONS=true`.
 
 Full examples for every platform in [`examples/`](examples/).
-
-## Who should care
-
-**IDE copilot teams** — Your tool reads raw markdown from repositories. Every `README.md` in every dependency is an input to your model. Strip invisible content before ingestion.
-
-**"Ask AI about this repo" features** — Same exposure. The repo's documentation is untrusted input, not system instructions.
-
-**RAG pipeline operators** — If you're embedding markdown documentation, you're embedding invisible content alongside visible content. Your retrieval system will surface both. Sanitize before embedding.
-
-**Platform teams (GitHub, GitLab, npm, PyPI)** — Consider offering a "rendered only" API endpoint for AI tool integrations. Show indicators when files contain HTML comments.
-
-**Security teams** — Add documentation scanning to your supply chain security posture. `npm audit` checks code dependencies. Nothing checks documentation dependencies.
 
 ## The policy question
 
